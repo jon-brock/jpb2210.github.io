@@ -1,7 +1,12 @@
-name: "Yay internet!"
+name:
 output_dir: "."
 navbar:
   title: "Home"
+  left:
+    - text: "Professional Experience"
+    - href: professional.html
+    - text: "Volunteer Experience"
+    - href: volunteer.html
   right:
     - text: "About"
       href: about.html
@@ -11,4 +16,4 @@ navbar:
       href: http://github.com/jpb2210/
 output:
   html_document:
-    theme: cerulean
+    theme: sandstone
