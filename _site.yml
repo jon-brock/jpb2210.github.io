@@ -1,7 +1,7 @@
 name: "Jon Brock"
 output_dir: "."
 navbar:
-  title: "Home"
+  title: "Jon Brock"
   left:
     - text: "Education"
       href: education.html
@@ -13,6 +13,8 @@ navbar:
       href: publications.html
     - text: "Technical Skills"
       href: skills.html
+    - text: "Plots"
+      href: plots.html
   right:
     - text: "LinkedIn"
       href: https://www.linkedin.com/in/jon-brock/

@@ -1,0 +1,11 @@
+---
+title: "Plotly Plots"
+---
+
+```{r load packages, include = FALSE}
+library(tidyverse)
+library(viridis)
+library(p8105.datasets)
+library(plotly)
+```
+
