@@ -1,0 +1,12 @@
+---
+title: "<span style='font-size: 25px'>Technical Skills</style>"
+---
+
+***
+
+• Data cleaning, transformation, and analysis with SAS v. 9.4 (intermediate-level user)  
+• Public health surveillance methods  
+• Microsoft Excel and Microsoft Access front and back-end use and design  
+• Medical record surveillance and abstraction (Epic, eClinicalWorks)  
+• Survey development and data management using QDS(TM)  
+• Preparation of scientific manuscripts, posters, and abstract

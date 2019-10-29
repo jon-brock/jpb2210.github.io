@@ -8,28 +8,26 @@ title: "<span style='font-size: 25px'>Professional Experience</style>"
 
 ***  
 
-#### ICAP at Columbia University - Harlem Prevention Center  
-##### Outreach Worker (09/2018 - 03/2019)  
+#### **ICAP at Columbia University - Harlem Prevention Center**  
+##### *Outreach Worker (09/2018 - 03/2019)*  
 • Conducted community outreach and engagement to disseminate information regarding PrEP  
 • Recruited participants for HPTN 083 via social networking mobile apps and at designated venues  
+
 ***  
-#### San Francisco Department of Public Health  
-###### 06/2019 - 08/2019  
-#####	HIV Surveillance Summer Research Associate  
+
+#### **San Francisco Department of Public Health**  
+##### *HIV Surveillance Summer Research Associate (06/2019 - 08/2019)*  
 • Developed research hypotheses using previously collected Medical Monitoring Project (MMP) data  
 • Cleaned and merged interview and medical record abstraction datasets  
 • Drafted a research abstract pertaining to indicators of STI testing amongst PLWH in San Francisco  
 • Performed data cleaning and analyses using SAS v. 9.4  
 
-###### 04/2018 - 08/2018
-##### HIV Re-Linkage to Care Specialist  
+##### *HIV Re-Linkage to Care Specialist - San Francisco City Clinic (04/2018 - 08/2018)*  
 • Piloted an HIV molecular surveillance project to assess its impact on interrupting HIV transmission  
 • Re-linked not-in-care HIV+ individuals living in San Francisco back into primary medical care  
 
-###### 10/2015 - 10/2017  
-##### Research Associate - HIV Epidemiology Section  
-• Recruited sampled (HIV+) participants via letters, phone calls, and field visits to their homes and medical appointments  
-as part of the Medical Monitoring Project (MMP)  
+##### *Research Associate - HIV Epidemiology Section (10/2015 - 10/2017)*  
+• Recruited sampled (HIV+) participants via letters, phone calls, and field visits to their homes and medical appointments as part of MMP  
 • Conducted 100+ quantitative interviews with sampled MMP participants  
 • Obtained informed consent from eligible MMP participants  
 • Provided quality assurance (QA) of interviews by observing and evaluating staff interviewers  
@@ -39,32 +37,28 @@ as part of the Medical Monitoring Project (MMP)
 • Managed and oversaw all data entry for the Supplemental Surveillance Network (SSuN) project  
 • Developed and improved paper and electronic-based data collection tools and procedures  
 
-###### 07/2015 - 10/2015  
-##### Study Recruiter - Substance Use Research Unit  
+##### *Study Recruiter - Substance Use Research Unit (07/2015 - 10/2015)*  
 • Conducted field surveys and disseminated meth and alcohol-use research studies to recruit diverse substance-using participants  
 • Disseminated meth and alcohol-use research studies' objectives to potential participants  
 
 ***
 
-#### Public Health - Seattle & King County  
-###### 11/2017 - 02/2018  
-##### Disease Research and Intervention Specialist – Harborview STD Clinic  
+#### **Public Health - Seattle & King County**  
+##### *Disease Research and Intervention Specialist – Harborview STD Clinic (11/2017 - 02/2018)*  
 • Investigated and interpreted laboratory and clinical reports to ensure data accuracy  
 • Performed voluminous data entry of HIV/STI labs and case reports from laboratories and clinics  
 
 ***  
 
-#### San Francisco AIDS Foundation  
-###### 04/2018 – 08/2018
-##### Lab Technician II – Per Diem – Strut Sexual Health Clinic (formerly Magnet)  
+#### **San Francisco AIDS Foundation**  
+##### *Lab Technician II – Per Diem – Strut Sexual Health Clinic (04/2018 – 08/2018)*  
 • Performed high volume venipuncture with exceptional accuracy  
 • Effectively and independently managed the lab duties when needed  
 • Provided risk reduction and HIV test counseling  
 • Administered and logged rapid HIV tests and CMP/Kidney Panel tests  
 • Triaged patients for appropriate services, including PrEP, nPEP, and HIV/STI testing and treatment  
 
-###### 09/2014 – 12/2014  
-##### Interim HIV/STI Data Manager  
+##### *Interim HIV/STI Data Manager - Magnet Sexual Health Clinic (09/2014 – 12/2014)*
 • Entered HIV testing data into a secure online portal for all SF AIDS Foundation affiliated clinics  
 • Generated monthly reports reflecting clients' behavioral risks  
 • Managed the data for all testing services  
