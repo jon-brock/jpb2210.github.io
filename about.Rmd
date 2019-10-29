@@ -1,6 +1,9 @@
 ---
-title: About Jon
+title: "<span style='font-size: 25px'>About Jon</style>"
 ---
+<div style = "float:right">
+<img src="images/professional headshot.jpg" style="width:90%">
+</div>
 
 Jonathan ("Jon") Brock was born in 1984 in Kent, Washington. He attended St. Anthony Catholic Elementary School in Renton, WA for grades K-8; John F. Kennedy Memorial High School in Burien, WA for grades 9-12; and Seattle University in Seattle, WA for undergraduate studies. He completed his Bachelor of Arts in Humanities in June 2007.  
 

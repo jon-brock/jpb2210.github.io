@@ -1,12 +1,18 @@
-name:
+name: "Jon Brock"
 output_dir: "."
 navbar:
   title: "Home"
   left:
+    - text: "Education"
+      href: education.html
     - text: "Professional Experience"
-    - href: professional.html
+      href: professional.html
     - text: "Volunteer Experience"
-    - href: volunteer.html
+      href: volunteer.html
+    - text: "Publications"
+      href: publications.html
+    - text: "Technical Skills"
+      href: skills.html
   right:
     - text: "About"
       href: about.html
