@@ -1,11 +1,45 @@
 ---
 title: "Plotly Plots"
+output:
+    flexdashboard::flex_dashboard:
+        orientation:  columns
+        vertical_layout: fill
 ---
 
 ```{r load packages, include = FALSE}
 library(tidyverse)
-library(viridis)
-library(p8105.datasets)
 library(plotly)
+library(flexdashboard)
 ```
 
+Column {data-width=550}
+-----------------------------------------------------------------------
+
+### Top 10 NYC Food Establishments by Store Count
+
+```{r plot A}
+p8105.datasets::rest_inspec %>%
+    count(dba, sort = TRUE) %>% 
+    top_n(10) %>% 
+    plot_ly(y = ~n, color = ~dba, type = "bar")
+```
+
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+### Range of Food Inspection Scores for Central Harlem's Dunkin Donuts
+
+```{r plot B}
+p8105.datasets::rest_inspec %>%
+    filter(boro == "MANHATTAN", dba == "DUNKIN' DONUTS", zipcode == c("10026", "10027", "10030", "10037", "10039")) %>% 
+    drop_na(score) %>%
+    plot_ly(y = ~score, color = ~street, type = "box")
+```
+
+### Chart C
+
+```{r eval = FALSE}
+p8105.datasets::rest_inspec %>%
+    
+    
+```
