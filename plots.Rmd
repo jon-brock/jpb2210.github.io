@@ -12,10 +12,10 @@ library(plotly)
 library(flexdashboard)
 ```
 
-Column {data-width=550}
+Column {data-width=575}
 -----------------------------------------------------------------------
 
-### Top 10 NYC Food Establishments by Store Count
+### Top 10 **NYC** Food Establishments by Store Count
 
 ```{r plot A}
 p8105.datasets::rest_inspec %>%
@@ -24,10 +24,10 @@ p8105.datasets::rest_inspec %>%
     plot_ly(y = ~n, color = ~dba, type = "bar")
 ```
 
-Column {data-width=450}
+Column {data-width=425}
 -----------------------------------------------------------------------
 
-### Range of Food Inspection Scores for Central Harlem's Dunkin Donuts
+### Range of Food Inspection Scores for Central Harlem's Dunkin Donuts (lower scores are better)
 
 ```{r plot B}
 p8105.datasets::rest_inspec %>%
@@ -36,10 +36,12 @@ p8105.datasets::rest_inspec %>%
     plot_ly(y = ~score, color = ~street, type = "box")
 ```
 
-### Chart C
+### Top 12 Food Establishment Types in **Staten Island** by Store Count
 
-```{r eval = FALSE}
+```{r plot C}
 p8105.datasets::rest_inspec %>%
-    
-    
+    filter(boro == "STATEN ISLAND") %>% 
+    count(cuisine_description, sort = TRUE) %>% 
+    top_n(12) %>% 
+    plot_ly(x = ~cuisine_description, y = ~n, type = "scatter", mode = "markers", color = ~cuisine_description, size = 10, showlegend = F)
 ```
