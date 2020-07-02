@@ -29,12 +29,12 @@ window.FlexDashboardComponents = [];
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
 <script src="site_libs/stickytableheaders-0.1.19/jquery.stickytableheaders.min.js"></script>
 <script src="site_libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
-<script src="site_libs/plotly-binding-4.9.0/plotly.js"></script>
+<script src="site_libs/plotly-binding-4.9.2.1/plotly.js"></script>
 <script src="site_libs/typedarray-0.1/typedarray.min.js"></script>
-<link href="site_libs/crosstalk-1.0.0/css/crosstalk.css" rel="stylesheet" />
-<script src="site_libs/crosstalk-1.0.0/js/crosstalk.min.js"></script>
-<link href="site_libs/plotly-htmlwidgets-css-1.46.1/plotly-htmlwidgets.css" rel="stylesheet" />
-<script src="site_libs/plotly-main-1.46.1/plotly-latest.min.js"></script>
+<link href="site_libs/crosstalk-1.1.0.1/css/crosstalk.css" rel="stylesheet" />
+<script src="site_libs/crosstalk-1.1.0.1/js/crosstalk.min.js"></script>
+<link href="site_libs/plotly-htmlwidgets-css-1.52.2/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="site_libs/plotly-main-1.52.2/plotly-latest.min.js"></script>
 <style type="text/css">
 
 /*
@@ -848,7 +848,8 @@ var FlexDashboard = (function () {
       defaultFigWidthMobile: 360,
       defaultFigHeightMobile: 461,
       isMobile: false,
-      isPortrait: false
+      isPortrait: false,
+      resize_reload: true
     });
   };
 
@@ -901,9 +902,9 @@ var FlexDashboard = (function () {
         globalSidebar.addClass('level3');
         var h1 = globalSidebar.children('h1');
         var h3 = $('<h3></h3>');
-        h3.html(h1.html());
+        h3.append(h1.contents());
         h3.insertBefore(h1);
-        h1.remove();
+        h1.detach();
 
         // move it into the first page
         var page = dashboardContainer.find('.section.level1').first();
@@ -968,16 +969,29 @@ var FlexDashboard = (function () {
     initPrismHighlighting();
 
     // record mobile and orientation state then register a handler
-    // to refresh if it changes
+    // to refresh if resize_reload is set to true and it changes
     _options.isMobile = isMobilePhone();
     _options.isPortrait = isPortrait();
-    $(window).on('resize', function() {
-      if (_options.isMobile !== isMobilePhone() ||
-          _options.isPortrait !== isPortrait()) {
-        window.location.reload();
+    if (_options.resize_reload) {
+      $(window).on('resize', function() {
+        if (_options.isMobile !== isMobilePhone() ||
+            _options.isPortrait !== isPortrait()) {
+          window.location.reload();
+        }
+      });
+    } else {
+      // if in desktop mode and resizing to mobile, make sure the heights are 100%
+      // This enforces what `fillpage.css` does for "wider" pages.
+      // Since we are not reloading once the page becomes small, we need to force the height to 100%
+      // This is a new situation introduced when `_options.resize_reload` is `false`
+      if (! _options.isMobile) {
+        // only add if `fillpage.css` was added in the first place
+        if (_options.fillPage) {
+          // fillpage.css
+          $("html,body,#dashboard").css("height", "100%");
+        }
       }
-    });
-
+    }
     // trigger layoutcomplete event
     dashboardContainer.trigger('flexdashboard:layoutcomplete');
   }
@@ -1089,10 +1103,10 @@ var FlexDashboard = (function () {
     if (active)
       wrapper.addClass('active');
 
-    // get a reference to the h1, discover it's id and title, then remove it
+    // get a reference to the h1, discover its inner contens, then detach it
     var h1 = wrapper.find('h1').first();
-    var title = h1.html();
-    h1.remove();
+    var title = h1.contents();
+    h1.detach();
 
     // create a navbar item
     var li = $('<li></li>');
@@ -1122,7 +1136,14 @@ var FlexDashboard = (function () {
 
       // get the name of the icon set and icon
       var dashPos = icon.indexOf("-");
-      var iconSet = icon.substring(0, dashPos);
+      var iconSet = null;
+      var iconSplit = icon.split(" ");
+      if (iconSplit.length > 1) {
+        iconSet = iconSplit[0];
+        icon = iconSplit.slice(1).join(" ");
+      } else {
+        iconSet = icon.substring(0, dashPos);
+      }
       var iconName = icon.substring(dashPos + 1);
 
       // create the icon
@@ -1223,9 +1244,9 @@ var FlexDashboard = (function () {
       sidebar.wrapInner('<div class="section level3"></div>');
       var h2 = sidebar.find('h2');
       var h3 = $('<h3></h3>');
-      h3.html(h2.html());
+      h3.append(h2.contents());
       h3.insertBefore(h2);
-      h2.remove();
+      h2.detach();
 
       // wipeout h2 elements then enclose them in a single h2
       var level2 = page.find('div.section.level2');
@@ -1367,8 +1388,8 @@ var FlexDashboard = (function () {
       // extract the title from the h3
       var li = $('<li></li>');
       var h3 = frame.children('h3');
-      li.html(h3.html());
-      h3.remove();
+      li.append(h3.contents());
+      h3.detach();
       ul.append(li);
 
       // extract commentary
@@ -1764,7 +1785,7 @@ var FlexDashboard = (function () {
 
     // add the title
     var chartTitle = $('<div class="chart-title"></div>');
-    chartTitle.html(title);
+    chartTitle.append(title);
     chart.prepend(chartTitle);
 
     // add the notes section
@@ -1820,10 +1841,11 @@ var FlexDashboard = (function () {
 
       // get the heading element within it and grab it's text
       var heading = tab.find('h' + tabLevel + ':first');
-      var headingText = heading.html();
+      var headingDom = heading.contents();
 
       // build and append the tab list item
-      var a = $('<a role="tab" data-toggle="tab">' + headingText + '</a>');
+      var a = $('<a role="tab" data-toggle="tab"></a>');
+      a.append(headingDom);
       a.attr('href', '#' + id);
       a.attr('aria-controls', id);
       var li = $('<li role="presentation"></li>');
@@ -1946,8 +1968,8 @@ var FlexDashboard = (function () {
     var h3 = container.children('h3').first();
     var title = '';
     if (!container.hasClass('no-title'))
-      title = h3.html();
-    h3.remove();
+      title = h3.contents();
+    h3.detach();
     return title;
   }
 
@@ -1958,11 +1980,11 @@ var FlexDashboard = (function () {
     var caption = chartContent.children('div.image-container')
                               .children('p.caption');
     if (blockquote.length) {
-      chartNotes.html(blockquote.children('p:first-child').html());
+      chartNotes.empty().append(blockquote.children('p:first-child').contents());
       blockquote.remove();
       return true;
     } else if (caption.length) {
-      chartNotes.html(caption.html());
+      chartNotes.empty().append(caption.contents());
       caption.remove();
       return true;
     } else {
@@ -2022,14 +2044,14 @@ var FlexDashboard = (function () {
   function handleLocationHash() {
 
     // restore tab/page from bookmark
-    var hash = window.location.hash;
+    var hash = window.decodeURIComponent(window.location.hash);
     if (hash.length > 0)
       $('ul.nav a[href="' + hash + '"]').tab('show');
     FlexDashboardUtils.manageActiveNavbarMenu();
 
     // navigate to a tab when the history changes
     window.addEventListener("popstate", function(e) {
-      var hash = window.location.hash;
+      var hash = window.decodeURIComponent(window.location.hash);
       var activeTab = $('ul.nav a[href="' + hash + '"]');
       if (activeTab.length) {
         activeTab.tab('show');
@@ -2492,7 +2514,7 @@ window.FlexDashboardComponents.push({
 
     // caption
     var caption = $('<p class="caption"></p>');
-    caption.html(chartTitle);
+    caption.append(chartTitle);
 
     // build inner div for value box and add it
     var inner = $('<div class="inner"></div>');
@@ -2505,9 +2527,15 @@ window.FlexDashboardComponents.push({
     valueBox.append(icon);
     function setIcon(chartIcon) {
       var iconLib = "";
-      var components = chartIcon.split("-");
-      if (components.length > 1)
-        iconLib = components[0];
+      var iconSplit = chartIcon.split(" ");
+      if (iconSplit.length > 1) {
+        iconLib = iconSplit[0];
+        chartIcon = iconSplit.slice(1).join(" ");
+      } else {
+        var components = chartIcon.split("-");
+        if (components.length > 1)
+          iconLib = components[0];
+      }
       icon.children('i').attr('class', iconLib + ' ' + chartIcon);
     }
     var chartIcon = valueBox.attr('data-icon');
@@ -2587,8 +2615,6 @@ window.FlexDashboardComponents.push({
     );
   }
 });
-
-
 </script>
 
 <div id="dashboard-container">
@@ -2600,8 +2626,8 @@ window.FlexDashboardComponents.push({
 <div class="knitr-options" data-fig-width="576" data-fig-height="460">
 
 </div>
-<div id="htmlwidget-da064d3ecbf584494973" style="width:576px;height:460.8px;" class="plotly html-widget"></div>
-<script type="application/json" data-for="htmlwidget-da064d3ecbf584494973">{"x":{"visdat":{"2ed8e59d398":["function () ","plotlyVisDat"]},"cur_data":"2ed8e59d398","attrs":{"2ed8e59d398":{"y":{},"color":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"bar"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"yaxis":{"domain":[0,1],"automargin":true,"title":"n"},"xaxis":{"domain":[0,1],"automargin":true},"hovermode":"closest","showlegend":true},"source":"A","config":{"showSendToCloud":false},"data":[{"y":[1059],"type":"bar","name":"BURGER KING","marker":{"color":"rgba(102,194,165,1)","line":{"color":"rgba(102,194,165,1)"}},"textfont":{"color":"rgba(102,194,165,1)"},"error_y":{"color":"rgba(102,194,165,1)"},"error_x":{"color":"rgba(102,194,165,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[958],"type":"bar","name":"CHIPOTLE MEXICAN GRILL","marker":{"color":"rgba(228,156,113,1)","line":{"color":"rgba(228,156,113,1)"}},"textfont":{"color":"rgba(228,156,113,1)"},"error_y":{"color":"rgba(228,156,113,1)"},"error_x":{"color":"rgba(228,156,113,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[1199],"type":"bar","name":"CROWN FRIED CHICKEN","marker":{"color":"rgba(201,153,157,1)","line":{"color":"rgba(201,153,157,1)"}},"textfont":{"color":"rgba(201,153,157,1)"},"error_y":{"color":"rgba(201,153,157,1)"},"error_x":{"color":"rgba(201,153,157,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[1427],"type":"bar","name":"DOMINO'S","marker":{"color":"rgba(175,154,200,1)","line":{"color":"rgba(175,154,200,1)"}},"textfont":{"color":"rgba(175,154,200,1)"},"error_y":{"color":"rgba(175,154,200,1)"},"error_x":{"color":"rgba(175,154,200,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[4268],"type":"bar","name":"DUNKIN' DONUTS","marker":{"color":"rgba(226,148,184,1)","line":{"color":"rgba(226,148,184,1)"}},"textfont":{"color":"rgba(226,148,184,1)"},"error_y":{"color":"rgba(226,148,184,1)"},"error_x":{"color":"rgba(226,148,184,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[1494],"type":"bar","name":"DUNKIN' DONUTS, BASKIN ROBBINS","marker":{"color":"rgba(176,209,99,1)","line":{"color":"rgba(176,209,99,1)"}},"textfont":{"color":"rgba(176,209,99,1)"},"error_y":{"color":"rgba(176,209,99,1)"},"error_x":{"color":"rgba(176,209,99,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[1185],"type":"bar","name":"KENNEDY FRIED CHICKEN","marker":{"color":"rgba(227,217,62,1)","line":{"color":"rgba(227,217,62,1)"}},"textfont":{"color":"rgba(227,217,62,1)"},"error_y":{"color":"rgba(227,217,62,1)"},"error_x":{"color":"rgba(227,217,62,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[2706],"type":"bar","name":"MCDONALD'S","marker":{"color":"rgba(245,207,100,1)","line":{"color":"rgba(245,207,100,1)"}},"textfont":{"color":"rgba(245,207,100,1)"},"error_y":{"color":"rgba(245,207,100,1)"},"error_x":{"color":"rgba(245,207,100,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[2176],"type":"bar","name":"STARBUCKS","marker":{"color":"rgba(219,192,155,1)","line":{"color":"rgba(219,192,155,1)"}},"textfont":{"color":"rgba(219,192,155,1)"},"error_y":{"color":"rgba(219,192,155,1)"},"error_x":{"color":"rgba(219,192,155,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[3686],"type":"bar","name":"SUBWAY","marker":{"color":"rgba(179,179,179,1)","line":{"color":"rgba(179,179,179,1)"}},"textfont":{"color":"rgba(179,179,179,1)"},"error_y":{"color":"rgba(179,179,179,1)"},"error_x":{"color":"rgba(179,179,179,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-c6153696b1f8549b1c93" style="width:576px;height:460.8px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-c6153696b1f8549b1c93">{"x":{"visdat":{"8bef66928864":["function () ","plotlyVisDat"]},"cur_data":"8bef66928864","attrs":{"8bef66928864":{"y":{},"color":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"bar"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"yaxis":{"domain":[0,1],"automargin":true,"title":"n"},"xaxis":{"domain":[0,1],"automargin":true},"hovermode":"closest","showlegend":true},"source":"A","config":{"showSendToCloud":false},"data":[{"y":[1059],"type":"bar","name":"BURGER KING","marker":{"color":"rgba(102,194,165,1)","line":{"color":"rgba(102,194,165,1)"}},"textfont":{"color":"rgba(102,194,165,1)"},"error_y":{"color":"rgba(102,194,165,1)"},"error_x":{"color":"rgba(102,194,165,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[958],"type":"bar","name":"CHIPOTLE MEXICAN GRILL","marker":{"color":"rgba(228,156,113,1)","line":{"color":"rgba(228,156,113,1)"}},"textfont":{"color":"rgba(228,156,113,1)"},"error_y":{"color":"rgba(228,156,113,1)"},"error_x":{"color":"rgba(228,156,113,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[1199],"type":"bar","name":"CROWN FRIED CHICKEN","marker":{"color":"rgba(201,152,157,1)","line":{"color":"rgba(201,152,157,1)"}},"textfont":{"color":"rgba(201,152,157,1)"},"error_y":{"color":"rgba(201,152,157,1)"},"error_x":{"color":"rgba(201,152,157,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[1427],"type":"bar","name":"DOMINO'S","marker":{"color":"rgba(175,154,200,1)","line":{"color":"rgba(175,154,200,1)"}},"textfont":{"color":"rgba(175,154,200,1)"},"error_y":{"color":"rgba(175,154,200,1)"},"error_x":{"color":"rgba(175,154,200,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[4268],"type":"bar","name":"DUNKIN' DONUTS","marker":{"color":"rgba(226,148,184,1)","line":{"color":"rgba(226,148,184,1)"}},"textfont":{"color":"rgba(226,148,184,1)"},"error_y":{"color":"rgba(226,148,184,1)"},"error_x":{"color":"rgba(226,148,184,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[1494],"type":"bar","name":"DUNKIN' DONUTS, BASKIN ROBBINS","marker":{"color":"rgba(176,208,99,1)","line":{"color":"rgba(176,208,99,1)"}},"textfont":{"color":"rgba(176,208,99,1)"},"error_y":{"color":"rgba(176,208,99,1)"},"error_x":{"color":"rgba(176,208,99,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[1185],"type":"bar","name":"KENNEDY FRIED CHICKEN","marker":{"color":"rgba(227,217,62,1)","line":{"color":"rgba(227,217,62,1)"}},"textfont":{"color":"rgba(227,217,62,1)"},"error_y":{"color":"rgba(227,217,62,1)"},"error_x":{"color":"rgba(227,217,62,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[2706],"type":"bar","name":"MCDONALD'S","marker":{"color":"rgba(245,207,100,1)","line":{"color":"rgba(245,207,100,1)"}},"textfont":{"color":"rgba(245,207,100,1)"},"error_y":{"color":"rgba(245,207,100,1)"},"error_x":{"color":"rgba(245,207,100,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[2176],"type":"bar","name":"STARBUCKS","marker":{"color":"rgba(219,192,155,1)","line":{"color":"rgba(219,192,155,1)"}},"textfont":{"color":"rgba(219,192,155,1)"},"error_y":{"color":"rgba(219,192,155,1)"},"error_x":{"color":"rgba(219,192,155,1)"},"xaxis":"x","yaxis":"y","frame":null},{"y":[3686],"type":"bar","name":"SUBWAY","marker":{"color":"rgba(179,179,179,1)","line":{"color":"rgba(179,179,179,1)"}},"textfont":{"color":"rgba(179,179,179,1)"},"error_y":{"color":"rgba(179,179,179,1)"},"error_x":{"color":"rgba(179,179,179,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <div id="column-1" class="section level2" data-width="425">
@@ -2611,16 +2637,16 @@ window.FlexDashboardComponents.push({
 <div class="knitr-options" data-fig-width="576" data-fig-height="460">
 
 </div>
-<div id="htmlwidget-7008cc97927ab55c75ec" style="width:576px;height:460.8px;" class="plotly html-widget"></div>
-<script type="application/json" data-for="htmlwidget-7008cc97927ab55c75ec">{"x":{"visdat":{"2ed83f73e154":["function () ","plotlyVisDat"]},"cur_data":"2ed83f73e154","attrs":{"2ed83f73e154":{"y":{},"color":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"box"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"yaxis":{"domain":[0,1],"automargin":true,"title":"score"},"xaxis":{"domain":[0,1],"automargin":true},"hovermode":"closest","showlegend":true},"source":"A","config":{"showSendToCloud":false},"data":[{"fillcolor":"rgba(102,194,165,0.5)","y":[5],"type":"box","name":"AMSTERDAM AVE","marker":{"color":"rgba(102,194,165,1)","line":{"color":"rgba(102,194,165,1)"}},"line":{"color":"rgba(102,194,165,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(252,141,98,0.5)","y":[10,9,10],"type":"box","name":"FREDERICK DOUGLASS BLVD","marker":{"color":"rgba(252,141,98,1)","line":{"color":"rgba(252,141,98,1)"}},"line":{"color":"rgba(252,141,98,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(141,160,203,0.5)","y":[7,12],"type":"box","name":"LENOX AVENUE","marker":{"color":"rgba(141,160,203,1)","line":{"color":"rgba(141,160,203,1)"}},"line":{"color":"rgba(141,160,203,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(231,138,195,0.5)","y":[4],"type":"box","name":"ST NICHOLAS AVENUE","marker":{"color":"rgba(231,138,195,1)","line":{"color":"rgba(231,138,195,1)"}},"line":{"color":"rgba(231,138,195,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(166,216,84,0.5)","y":[18,7,18,2],"type":"box","name":"W 125TH ST","marker":{"color":"rgba(166,216,84,1)","line":{"color":"rgba(166,216,84,1)"}},"line":{"color":"rgba(166,216,84,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(255,217,47,0.5)","y":[13,10,10],"type":"box","name":"WEST  110 STREET","marker":{"color":"rgba(255,217,47,1)","line":{"color":"rgba(255,217,47,1)"}},"line":{"color":"rgba(255,217,47,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(229,196,148,0.5)","y":[11,11],"type":"box","name":"WEST  145 STREET","marker":{"color":"rgba(229,196,148,1)","line":{"color":"rgba(229,196,148,1)"}},"line":{"color":"rgba(229,196,148,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-2577a129de6ecb528930" style="width:576px;height:460.8px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2577a129de6ecb528930">{"x":{"visdat":{"8bef13ef0b68":["function () ","plotlyVisDat"]},"cur_data":"8bef13ef0b68","attrs":{"8bef13ef0b68":{"y":{},"color":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"box"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"yaxis":{"domain":[0,1],"automargin":true,"title":"score"},"xaxis":{"domain":[0,1],"automargin":true},"hovermode":"closest","showlegend":true},"source":"A","config":{"showSendToCloud":false},"data":[{"fillcolor":"rgba(102,194,165,0.5)","y":[5],"type":"box","name":"AMSTERDAM AVE","marker":{"color":"rgba(102,194,165,1)","line":{"color":"rgba(102,194,165,1)"}},"line":{"color":"rgba(102,194,165,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(252,141,98,0.5)","y":[10,9,10],"type":"box","name":"FREDERICK DOUGLASS BLVD","marker":{"color":"rgba(252,141,98,1)","line":{"color":"rgba(252,141,98,1)"}},"line":{"color":"rgba(252,141,98,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(141,160,203,0.5)","y":[7,12],"type":"box","name":"LENOX AVENUE","marker":{"color":"rgba(141,160,203,1)","line":{"color":"rgba(141,160,203,1)"}},"line":{"color":"rgba(141,160,203,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(231,138,195,0.5)","y":[4],"type":"box","name":"ST NICHOLAS AVENUE","marker":{"color":"rgba(231,138,195,1)","line":{"color":"rgba(231,138,195,1)"}},"line":{"color":"rgba(231,138,195,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(166,216,84,0.5)","y":[18,7,18,2],"type":"box","name":"W 125TH ST","marker":{"color":"rgba(166,216,84,1)","line":{"color":"rgba(166,216,84,1)"}},"line":{"color":"rgba(166,216,84,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(255,217,47,0.5)","y":[13,10,10],"type":"box","name":"WEST  110 STREET","marker":{"color":"rgba(255,217,47,1)","line":{"color":"rgba(255,217,47,1)"}},"line":{"color":"rgba(255,217,47,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(229,196,148,0.5)","y":[11,11],"type":"box","name":"WEST  145 STREET","marker":{"color":"rgba(229,196,148,1)","line":{"color":"rgba(229,196,148,1)"}},"line":{"color":"rgba(229,196,148,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
 </div>
 <div id="top-12-food-establishment-types-in-staten-island-by-store-count" class="section level3">
 <h3>Top 12 Food Establishment Types in <strong>Staten Island</strong> by Store Count</h3>
 <div class="knitr-options" data-fig-width="576" data-fig-height="460">
 
 </div>
-<div id="htmlwidget-5b5a377db4704e8573c5" style="width:576px;height:460.8px;" class="plotly html-widget"></div>
-<script type="application/json" data-for="htmlwidget-5b5a377db4704e8573c5">{"x":{"visdat":{"2ed821b4d733":["function () ","plotlyVisDat"]},"cur_data":"2ed821b4d733","attrs":{"2ed821b4d733":{"x":{},"y":{},"mode":"markers","showlegend":false,"color":{},"size":10,"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"scatter"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"xaxis":{"domain":[0,1],"automargin":true,"title":"cuisine_description","type":"category","categoryorder":"array","categoryarray":["American","Bakery","Chinese","Delicatessen","Donuts","Ice Cream, Gelato, Yogurt, Ices","Italian","Japanese","Mexican","Pizza","Pizza/Italian","Spanish"]},"yaxis":{"domain":[0,1],"automargin":true,"title":"n"},"hovermode":"closest","showlegend":false},"source":"A","config":{"showSendToCloud":false},"data":[{"x":["American"],"y":[3268],"mode":"markers","showlegend":false,"type":"scatter","name":"American","marker":{"color":"rgba(102,194,165,1)","size":[55],"sizemode":"area","line":{"color":"rgba(102,194,165,1)"}},"textfont":{"color":"rgba(102,194,165,1)","size":55},"error_y":{"color":"rgba(102,194,165,1)","width":55},"error_x":{"color":"rgba(102,194,165,1)","width":55},"line":{"color":"rgba(102,194,165,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Bakery"],"y":[386],"mode":"markers","showlegend":false,"type":"scatter","name":"Bakery","marker":{"color":"rgba(211,164,122,1)","size":[55],"sizemode":"area","line":{"color":"rgba(211,164,122,1)"}},"textfont":{"color":"rgba(211,164,122,1)","size":55},"error_y":{"color":"rgba(211,164,122,1)","width":55},"error_x":{"color":"rgba(211,164,122,1)","width":55},"line":{"color":"rgba(211,164,122,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Chinese"],"y":[1196],"mode":"markers","showlegend":false,"type":"scatter","name":"Chinese","marker":{"color":"rgba(229,147,127,1)","size":[55],"sizemode":"area","line":{"color":"rgba(229,147,127,1)"}},"textfont":{"color":"rgba(229,147,127,1)","size":55},"error_y":{"color":"rgba(229,147,127,1)","width":55},"error_x":{"color":"rgba(229,147,127,1)","width":55},"line":{"color":"rgba(229,147,127,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Delicatessen"],"y":[283],"mode":"markers","showlegend":false,"type":"scatter","name":"Delicatessen","marker":{"color":"rgba(156,159,194,1)","size":[55],"sizemode":"area","line":{"color":"rgba(156,159,194,1)"}},"textfont":{"color":"rgba(156,159,194,1)","size":55},"error_y":{"color":"rgba(156,159,194,1)","width":55},"error_x":{"color":"rgba(156,159,194,1)","width":55},"line":{"color":"rgba(156,159,194,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Donuts"],"y":[403],"mode":"markers","showlegend":false,"type":"scatter","name":"Donuts","marker":{"color":"rgba(194,150,199,1)","size":[55],"sizemode":"area","line":{"color":"rgba(194,150,199,1)"}},"textfont":{"color":"rgba(194,150,199,1)","size":55},"error_y":{"color":"rgba(194,150,199,1)","width":55},"error_x":{"color":"rgba(194,150,199,1)","width":55},"line":{"color":"rgba(194,150,199,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Ice Cream, Gelato, Yogurt, Ices"],"y":[299],"mode":"markers","showlegend":false,"type":"scatter","name":"Ice Cream, Gelato, Yogurt, Ices","marker":{"color":"rgba(223,155,177,1)","size":[55],"sizemode":"area","line":{"color":"rgba(223,155,177,1)"}},"textfont":{"color":"rgba(223,155,177,1)","size":55},"error_y":{"color":"rgba(223,155,177,1)","width":55},"error_x":{"color":"rgba(223,155,177,1)","width":55},"line":{"color":"rgba(223,155,177,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Italian"],"y":[1331],"mode":"markers","showlegend":false,"type":"scatter","name":"Italian","marker":{"color":"rgba(182,204,108,1)","size":[55],"sizemode":"area","line":{"color":"rgba(182,204,108,1)"}},"textfont":{"color":"rgba(182,204,108,1)","size":55},"error_y":{"color":"rgba(182,204,108,1)","width":55},"error_x":{"color":"rgba(182,204,108,1)","width":55},"line":{"color":"rgba(182,204,108,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Japanese"],"y":[565],"mode":"markers","showlegend":false,"type":"scatter","name":"Japanese","marker":{"color":"rgba(209,217,69,1)","size":[55],"sizemode":"area","line":{"color":"rgba(209,217,69,1)"}},"textfont":{"color":"rgba(209,217,69,1)","size":55},"error_y":{"color":"rgba(209,217,69,1)","width":55},"error_x":{"color":"rgba(209,217,69,1)","width":55},"line":{"color":"rgba(209,217,69,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Mexican"],"y":[563],"mode":"markers","showlegend":false,"type":"scatter","name":"Mexican","marker":{"color":"rgba(253,215,61,1)","size":[55],"sizemode":"area","line":{"color":"rgba(253,215,61,1)"}},"textfont":{"color":"rgba(253,215,61,1)","size":55},"error_y":{"color":"rgba(253,215,61,1)","width":55},"error_x":{"color":"rgba(253,215,61,1)","width":55},"line":{"color":"rgba(253,215,61,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Pizza"],"y":[874],"mode":"markers","showlegend":false,"type":"scatter","name":"Pizza","marker":{"color":"rgba(237,202,125,1)","size":[55],"sizemode":"area","line":{"color":"rgba(237,202,125,1)"}},"textfont":{"color":"rgba(237,202,125,1)","size":55},"error_y":{"color":"rgba(237,202,125,1)","width":55},"error_x":{"color":"rgba(237,202,125,1)","width":55},"line":{"color":"rgba(237,202,125,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Pizza/Italian"],"y":[1175],"mode":"markers","showlegend":false,"type":"scatter","name":"Pizza/Italian","marker":{"color":"rgba(212,190,160,1)","size":[55],"sizemode":"area","line":{"color":"rgba(212,190,160,1)"}},"textfont":{"color":"rgba(212,190,160,1)","size":55},"error_y":{"color":"rgba(212,190,160,1)","width":55},"error_x":{"color":"rgba(212,190,160,1)","width":55},"line":{"color":"rgba(212,190,160,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Spanish"],"y":[340],"mode":"markers","showlegend":false,"type":"scatter","name":"Spanish","marker":{"color":"rgba(179,179,179,1)","size":[55],"sizemode":"area","line":{"color":"rgba(179,179,179,1)"}},"textfont":{"color":"rgba(179,179,179,1)","size":55},"error_y":{"color":"rgba(179,179,179,1)","width":55},"error_x":{"color":"rgba(179,179,179,1)","width":55},"line":{"color":"rgba(179,179,179,1)","width":55},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-499b664389d5d6bb9344" style="width:576px;height:460.8px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-499b664389d5d6bb9344">{"x":{"visdat":{"8bef782e8b29":["function () ","plotlyVisDat"]},"cur_data":"8bef782e8b29","attrs":{"8bef782e8b29":{"x":{},"y":{},"mode":"markers","showlegend":false,"color":{},"size":10,"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"scatter"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"xaxis":{"domain":[0,1],"automargin":true,"title":"cuisine_description","type":"category","categoryorder":"array","categoryarray":["American","Bakery","Chinese","Delicatessen","Donuts","Ice Cream, Gelato, Yogurt, Ices","Italian","Japanese","Mexican","Pizza","Pizza/Italian","Spanish"]},"yaxis":{"domain":[0,1],"automargin":true,"title":"n"},"hovermode":"closest","showlegend":false},"source":"A","config":{"showSendToCloud":false},"data":[{"x":["American"],"y":[3268],"mode":"markers","showlegend":false,"type":"scatter","name":"American","marker":{"color":"rgba(102,194,165,1)","size":[55],"sizemode":"area","line":{"color":"rgba(102,194,165,1)"}},"textfont":{"color":"rgba(102,194,165,1)","size":55},"error_y":{"color":"rgba(102,194,165,1)","width":55},"error_x":{"color":"rgba(102,194,165,1)","width":55},"line":{"color":"rgba(102,194,165,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Bakery"],"y":[386],"mode":"markers","showlegend":false,"type":"scatter","name":"Bakery","marker":{"color":"rgba(211,164,122,1)","size":[55],"sizemode":"area","line":{"color":"rgba(211,164,122,1)"}},"textfont":{"color":"rgba(211,164,122,1)","size":55},"error_y":{"color":"rgba(211,164,122,1)","width":55},"error_x":{"color":"rgba(211,164,122,1)","width":55},"line":{"color":"rgba(211,164,122,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Chinese"],"y":[1196],"mode":"markers","showlegend":false,"type":"scatter","name":"Chinese","marker":{"color":"rgba(229,147,127,1)","size":[55],"sizemode":"area","line":{"color":"rgba(229,147,127,1)"}},"textfont":{"color":"rgba(229,147,127,1)","size":55},"error_y":{"color":"rgba(229,147,127,1)","width":55},"error_x":{"color":"rgba(229,147,127,1)","width":55},"line":{"color":"rgba(229,147,127,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Delicatessen"],"y":[283],"mode":"markers","showlegend":false,"type":"scatter","name":"Delicatessen","marker":{"color":"rgba(156,159,194,1)","size":[55],"sizemode":"area","line":{"color":"rgba(156,159,194,1)"}},"textfont":{"color":"rgba(156,159,194,1)","size":55},"error_y":{"color":"rgba(156,159,194,1)","width":55},"error_x":{"color":"rgba(156,159,194,1)","width":55},"line":{"color":"rgba(156,159,194,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Donuts"],"y":[403],"mode":"markers","showlegend":false,"type":"scatter","name":"Donuts","marker":{"color":"rgba(194,150,199,1)","size":[55],"sizemode":"area","line":{"color":"rgba(194,150,199,1)"}},"textfont":{"color":"rgba(194,150,199,1)","size":55},"error_y":{"color":"rgba(194,150,199,1)","width":55},"error_x":{"color":"rgba(194,150,199,1)","width":55},"line":{"color":"rgba(194,150,199,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Ice Cream, Gelato, Yogurt, Ices"],"y":[299],"mode":"markers","showlegend":false,"type":"scatter","name":"Ice Cream, Gelato, Yogurt, Ices","marker":{"color":"rgba(223,155,177,1)","size":[55],"sizemode":"area","line":{"color":"rgba(223,155,177,1)"}},"textfont":{"color":"rgba(223,155,177,1)","size":55},"error_y":{"color":"rgba(223,155,177,1)","width":55},"error_x":{"color":"rgba(223,155,177,1)","width":55},"line":{"color":"rgba(223,155,177,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Italian"],"y":[1331],"mode":"markers","showlegend":false,"type":"scatter","name":"Italian","marker":{"color":"rgba(182,204,108,1)","size":[55],"sizemode":"area","line":{"color":"rgba(182,204,108,1)"}},"textfont":{"color":"rgba(182,204,108,1)","size":55},"error_y":{"color":"rgba(182,204,108,1)","width":55},"error_x":{"color":"rgba(182,204,108,1)","width":55},"line":{"color":"rgba(182,204,108,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Japanese"],"y":[565],"mode":"markers","showlegend":false,"type":"scatter","name":"Japanese","marker":{"color":"rgba(209,217,69,1)","size":[55],"sizemode":"area","line":{"color":"rgba(209,217,69,1)"}},"textfont":{"color":"rgba(209,217,69,1)","size":55},"error_y":{"color":"rgba(209,217,69,1)","width":55},"error_x":{"color":"rgba(209,217,69,1)","width":55},"line":{"color":"rgba(209,217,69,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Mexican"],"y":[563],"mode":"markers","showlegend":false,"type":"scatter","name":"Mexican","marker":{"color":"rgba(253,215,61,1)","size":[55],"sizemode":"area","line":{"color":"rgba(253,215,61,1)"}},"textfont":{"color":"rgba(253,215,61,1)","size":55},"error_y":{"color":"rgba(253,215,61,1)","width":55},"error_x":{"color":"rgba(253,215,61,1)","width":55},"line":{"color":"rgba(253,215,61,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Pizza"],"y":[874],"mode":"markers","showlegend":false,"type":"scatter","name":"Pizza","marker":{"color":"rgba(237,202,125,1)","size":[55],"sizemode":"area","line":{"color":"rgba(237,202,125,1)"}},"textfont":{"color":"rgba(237,202,125,1)","size":55},"error_y":{"color":"rgba(237,202,125,1)","width":55},"error_x":{"color":"rgba(237,202,125,1)","width":55},"line":{"color":"rgba(237,202,125,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Pizza/Italian"],"y":[1175],"mode":"markers","showlegend":false,"type":"scatter","name":"Pizza/Italian","marker":{"color":"rgba(212,190,160,1)","size":[55],"sizemode":"area","line":{"color":"rgba(212,190,160,1)"}},"textfont":{"color":"rgba(212,190,160,1)","size":55},"error_y":{"color":"rgba(212,190,160,1)","width":55},"error_x":{"color":"rgba(212,190,160,1)","width":55},"line":{"color":"rgba(212,190,160,1)","width":55},"xaxis":"x","yaxis":"y","frame":null},{"x":["Spanish"],"y":[340],"mode":"markers","showlegend":false,"type":"scatter","name":"Spanish","marker":{"color":"rgba(179,179,179,1)","size":[55],"sizemode":"area","line":{"color":"rgba(179,179,179,1)"}},"textfont":{"color":"rgba(179,179,179,1)","size":55},"error_y":{"color":"rgba(179,179,179,1)","width":55},"error_x":{"color":"rgba(179,179,179,1)","width":55},"line":{"color":"rgba(179,179,179,1)","width":55},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 
@@ -2652,7 +2678,8 @@ $(document).ready(function () {
     defaultFigWidth: 576,
     defaultFigHeight: 460,
     defaultFigWidthMobile: 360,
-    defaultFigHeightMobile: 460
+    defaultFigHeightMobile: 460,
+    resize_reload: true
   });
 });
 </script>
